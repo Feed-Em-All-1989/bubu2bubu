@@ -1,4 +1,8 @@
 use tokio::io::{AsyncRead, AsyncWrite, AsyncReadExt, AsyncWriteExt};
+use tokio::sync::Mutex;
+use super::Transport;
+
+pub const MAX_NOISE_PAYLOAD: usize = 65000;
 
 pub async fn send_frame<W: AsyncWrite + Unpin>(writer: &mut W, data: &[u8]) -> Result<(), String> {
     let len = (data.len() as u32).to_be_bytes();
@@ -20,4 +24,39 @@ pub async fn recv_frame<R: AsyncRead + Unpin>(reader: &mut R) -> Result<Vec<u8>,
     let mut buf = vec![0u8; len];
     reader.read_exact(&mut buf).await.map_err(|e| e.to_string())?;
     Ok(buf)
+}
+
+pub async fn send_noise_msg<W: AsyncWrite + Unpin>(
+    writer: &mut W,
+    transport: &Mutex<Transport>,
+    data: &[u8],
+) -> Result<(), String> {
+    let num_chunks = ((data.len() + MAX_NOISE_PAYLOAD - 1) / MAX_NOISE_PAYLOAD) as u32;
+    let header = num_chunks.to_be_bytes();
+    let enc_header = transport.lock().await.encrypt(&header)?;
+    send_frame(writer, &enc_header).await?;
+    for chunk in data.chunks(MAX_NOISE_PAYLOAD) {
+        let encrypted = transport.lock().await.encrypt(chunk)?;
+        send_frame(writer, &encrypted).await?;
+    }
+    Ok(())
+}
+
+pub async fn recv_noise_msg<R: AsyncRead + Unpin>(
+    reader: &mut R,
+    transport: &Mutex<Transport>,
+) -> Result<Vec<u8>, String> {
+    let enc_header = recv_frame(reader).await?;
+    let header = transport.lock().await.decrypt(&enc_header)?;
+    if header.len() < 4 {
+        return Err("bad header".into());
+    }
+    let num_chunks = u32::from_be_bytes([header[0], header[1], header[2], header[3]]) as usize;
+    let mut data = Vec::new();
+    for _ in 0..num_chunks {
+        let encrypted = recv_frame(reader).await?;
+        let chunk = transport.lock().await.decrypt(&encrypted)?;
+        data.extend_from_slice(&chunk);
+    }
+    Ok(data)
 }
