@@ -16,21 +16,26 @@ async fn get_public_key(state: State<'_, AppState>) -> Result<String, String> {
 }
 
 #[tauri::command]
-async fn host_session(state: State<'_, AppState>, port: u16) -> Result<(), String> {
+async fn set_username(state: State<'_, AppState>, name: String) -> Result<(), String> {
     let mut session = state.session.lock().await;
-    session.host(port).await
+    session.set_username(name);
+    Ok(())
 }
 
 #[tauri::command]
-async fn join_session(state: State<'_, AppState>, addr: String) -> Result<(), String> {
+async fn connect_to_server(state: State<'_, AppState>, addr: String) -> Result<(), String> {
     let mut session = state.session.lock().await;
-    session.join(&addr).await
+    session.connect(&addr).await
 }
 
 #[tauri::command]
-async fn send_message(state: State<'_, AppState>, text: String) -> Result<(), String> {
+async fn send_message(
+    state: State<'_, AppState>,
+    text: String,
+    reply_to: Option<String>,
+) -> Result<bubu2bubu::chat::session::ChatMessage, String> {
     let mut session = state.session.lock().await;
-    session.send(&text).await
+    session.send(&text, reply_to).await
 }
 
 #[tauri::command]
@@ -38,7 +43,7 @@ async fn recv_message(
     state: State<'_, AppState>,
 ) -> Result<bubu2bubu::chat::session::ChatMessage, String> {
     let mut session = state.session.lock().await;
-    session.recv().await
+    session.recv()
 }
 
 #[tauri::command]
@@ -58,8 +63,8 @@ fn main() {
         .manage(state)
         .invoke_handler(tauri::generate_handler![
             get_public_key,
-            host_session,
-            join_session,
+            set_username,
+            connect_to_server,
             send_message,
             recv_message,
             get_history,
