@@ -1,0 +1,32 @@
+[package]
+name = "bubu2bubu"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+snow = "0.9"
+x25519-dalek = { version = "2", features = ["static_secrets"] }
+aes-gcm = "0.10"
+hkdf = "0.12"
+sha2 = "0.10"
+hmac = "0.12"
+pbkdf2 = "0.12"
+rand = "0.8"
+image = { version = "0.25", default-features = false, features = ["png"] }
+hex = "0.4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+tauri = { version = "2", features = [] }
+base64 = "0.22"
+
+[lib]
+name = "bubu2bubu"
+path = "src/lib.rs"
+
+[[bin]]
+name = "bubu2bubu"
+path = "src/main.rs"

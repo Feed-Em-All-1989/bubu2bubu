@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bubu2bubu</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <aside id="sidebar">
+      <div id="sidebar-header">
+        <h1>bubu2bubu</h1>
+        <span id="status-dot" class="offline"></span>
+      </div>
+      <div id="identity">
+        <span id="pubkey-label">your key</span>
+        <code id="pubkey"></code>
+      </div>
+      <div id="connect-panel">
+        <input id="addr-input" type="text" placeholder="ip:port" />
+        <div id="connect-actions">
+          <button id="btn-host">host</button>
+          <button id="btn-join">join</button>
+        </div>
+        <input id="port-input" type="number" placeholder="port" value="9999" />
+      </div>
+      <div id="peer-info" class="hidden">
+        <span>connected to</span>
+        <code id="peer-key"></code>
+      </div>
+    </aside>
+    <main id="chat">
+      <div id="messages"></div>
+      <div id="input-bar">
+        <input id="msg-input" type="text" placeholder="message" />
+        <button id="btn-send">send</button>
+      </div>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
