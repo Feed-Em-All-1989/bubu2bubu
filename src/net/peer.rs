@@ -78,7 +78,7 @@ impl ServerConnection {
         reply_to: Option<String>,
     ) -> Result<String, String> {
         let config = StegoConfig::default();
-        let (png_bytes, metadata) = encoder::encode(plaintext, "bubu2bubu-stego", &config)?;
+        let (png_bytes, metadata) = encoder::encode(plaintext, "bubu2bubu-stego", &config).await?;
         let image = base64::Engine::encode(
             &base64::engine::general_purpose::STANDARD,
             &png_bytes,

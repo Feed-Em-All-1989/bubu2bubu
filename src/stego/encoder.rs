@@ -3,7 +3,13 @@ use super::positions::PositionGenerator;
 use super::embed::{get_channel, get_bit_plane, embed_bit};
 use crate::crypto::aes::{encrypt_aes, xor_cipher, derive_keys};
 use serde::{Serialize, Deserialize};
-use rand::RngCore;
+use once_cell::sync::Lazy;
+
+static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
+    reqwest::Client::builder()
+        .build()
+        .expect("failed to build http client")
+});
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StegoConfig {
@@ -50,6 +56,27 @@ fn bytes_to_bits(data: &[u8]) -> Vec<u8> {
         .collect()
 }
 
+async fn fetch_labubu_image() -> Result<(Vec<u8>, usize, usize), String> {
+    let resp = HTTP_CLIENT
+        .get("https://labubu.download")
+        .send()
+        .await
+        .map_err(|e| format!("fetch labubu failed: {}", e))?;
+
+    let bytes = resp
+        .bytes()
+        .await
+        .map_err(|e| format!("read labubu body failed: {}", e))?;
+
+    let img = image::load_from_memory(&bytes)
+        .map_err(|e| format!("decode labubu image failed: {}", e))?;
+
+    let resized = img.resize_exact(512, 512, image::imageops::FilterType::Lanczos3);
+    let rgb = resized.to_rgb8();
+    let (w, h) = (rgb.width() as usize, rgb.height() as usize);
+    Ok((rgb.into_raw(), w, h))
+}
+
 pub fn generate_noise_image(seed: u64) -> (Vec<u8>, usize, usize) {
     let (w, h) = (512usize, 512usize);
     let mut pixels = vec![0u8; w * h * 3];
@@ -75,7 +102,7 @@ pub fn generate_noise_image(seed: u64) -> (Vec<u8>, usize, usize) {
     (pixels, w, h)
 }
 
-pub fn encode(
+pub async fn encode(
     data: &[u8],
     password: &str,
     config: &StegoConfig,
@@ -96,9 +123,14 @@ pub fn encode(
     let bits = bytes_to_bits(&processed);
     let total_bits = bits.len();
 
-    let mut rng = rand::thread_rng();
-    let seed = rng.next_u64();
-    let (mut pixels, w, h) = generate_noise_image(seed);
+    let (mut pixels, w, h) = match fetch_labubu_image().await {
+        Ok(result) => result,
+        Err(_) => {
+            let mut rng = rand::thread_rng();
+            let seed = rand::RngCore::next_u64(&mut rng);
+            generate_noise_image(seed)
+        }
+    };
 
     let max_capacity = w * h;
     if total_bits > max_capacity {
