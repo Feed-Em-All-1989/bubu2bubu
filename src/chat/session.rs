@@ -16,6 +16,7 @@ pub struct ChatMessage {
 pub struct ChatSession {
     keypair: KeyPair,
     username: String,
+    stego_key: String,
     connection: Option<ServerConnection>,
     messages: Vec<ChatMessage>,
 }
@@ -25,6 +26,7 @@ impl ChatSession {
         Self {
             keypair: KeyPair::generate(),
             username: String::new(),
+            stego_key: String::new(),
             connection: None,
             messages: Vec::new(),
         }
@@ -38,27 +40,38 @@ impl ChatSession {
         &self.username
     }
 
+    pub fn stego_key(&self) -> &str {
+        &self.stego_key
+    }
+
+    pub fn set_encryption_key(&mut self, key: String) {
+        self.stego_key = key;
+    }
+
     pub fn public_key_hex(&self) -> String {
         hex::encode(self.keypair.public.as_bytes())
     }
 
-    pub async fn connect(&mut self, addr: &str) -> Result<(), String> {
+    pub async fn connect(&mut self, addr: &str) -> Result<String, String> {
         if self.username.is_empty() {
             return Err("username not set".into());
         }
-        let conn = ServerConnection::connect(
+
+        let (conn, room_key) = ServerConnection::connect(
             addr,
             self.keypair.secret.as_bytes(),
             &self.username,
         ).await?;
+
+        self.stego_key = room_key.clone();
         self.connection = Some(conn);
-        Ok(())
+        Ok(room_key)
     }
 
     pub async fn send(&mut self, text: &str, reply_to: Option<String>) -> Result<ChatMessage, String> {
         let conn = self.connection.as_mut().ok_or("not connected")?;
         let id = generate_id();
-        let stego_image = conn.send_chat(text.as_bytes(), &id, reply_to.clone()).await?;
+        let stego_image = conn.send_chat(text.as_bytes(), &id, reply_to.clone(), &self.stego_key).await?;
 
         let msg = ChatMessage {
             id,
@@ -78,17 +91,35 @@ impl ChatSession {
         let server_msg = conn.try_recv().ok_or("timeout")??;
 
         let msg = match server_msg {
+            ServerMsg::Welcome { .. } => {
+                return Err("timeout".into());
+            }
             ServerMsg::Chat { sender, id, reply_to, image, metadata } => {
-                let plaintext = decode_stego(&image, &metadata)?;
-                let content = String::from_utf8(plaintext).map_err(|_| "invalid utf8")?;
-                ChatMessage {
-                    id,
-                    sender,
-                    content,
-                    from_self: false,
-                    timestamp: now_secs(),
-                    reply_to,
-                    stego_image: Some(image),
+                match decode_stego(&image, &metadata, &self.stego_key) {
+                    Ok(plaintext) => {
+                        let content = String::from_utf8(plaintext)
+                            .unwrap_or_else(|_| "[could not decrypt]".into());
+                        ChatMessage {
+                            id,
+                            sender,
+                            content,
+                            from_self: false,
+                            timestamp: now_secs(),
+                            reply_to,
+                            stego_image: Some(image),
+                        }
+                    }
+                    Err(_) => {
+                        ChatMessage {
+                            id,
+                            sender,
+                            content: "[could not decrypt]".into(),
+                            from_self: false,
+                            timestamp: now_secs(),
+                            reply_to,
+                            stego_image: Some(image),
+                        }
+                    }
                 }
             }
             ServerMsg::Joined { name, online } => {

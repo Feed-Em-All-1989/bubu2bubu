@@ -18,6 +18,8 @@ pub enum ClientMsg {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum ServerMsg {
+    #[serde(rename = "welcome")]
+    Welcome { room_key: String },
     #[serde(rename = "joined")]
     Joined { name: String, online: usize },
     #[serde(rename = "left")]

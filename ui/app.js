@@ -72,13 +72,6 @@ function addMessage(msg) {
   messages.scrollTop = messages.scrollHeight
 }
 
-function refreshMessages() {
-  messages.innerHTML = ''
-  for (const id in messageMap) {
-    addMessageDom(messageMap[id])
-  }
-}
-
 function addMessageDom(msg) {
   const div = document.createElement('div')
   div.className = `message ${msg.from_self ? 'self' : 'peer'}`
@@ -159,6 +152,9 @@ async function startPolling() {
   }
 }
 
+let pendingRoomKey = null
+let connectedName = null
+
 $('#btn-connect').addEventListener('click', async () => {
   const name = $('#name-input').value.trim()
   const addr = $('#addr-input').value.trim()
@@ -168,12 +164,12 @@ $('#btn-connect').addEventListener('click', async () => {
     $('#btn-connect').textContent = 'connecting...'
     $('#btn-connect').disabled = true
     await invoke('set_username', { name })
-    await invoke('connect_to_server', { addr })
-    $('#status-dot').className = 'online'
-    $('#connect-panel').classList.add('hidden')
-    $('#server-info').classList.remove('hidden')
-    $('#server-addr-label').textContent = 'connected as ' + name
-    startPolling()
+    const roomKey = await invoke('connect_to_server', { addr })
+    connectedName = name
+    pendingRoomKey = roomKey
+    $('#key-prompt-value').textContent = roomKey
+    $('#key-prompt-input').value = ''
+    $('#key-prompt-overlay').classList.remove('hidden')
   } catch (e) {
     $('#btn-connect').textContent = 'connect'
     $('#btn-connect').disabled = false
@@ -187,6 +183,34 @@ $('#btn-connect').addEventListener('click', async () => {
       stego_image: null
     })
   }
+})
+
+function finishConnect(activeKey) {
+  $('#key-prompt-overlay').classList.add('hidden')
+  $('#status-dot').className = 'online'
+  $('#connect-panel').classList.add('hidden')
+  $('#server-info').classList.remove('hidden')
+  $('#server-addr-label').textContent = 'connected as ' + connectedName
+  $('#stego-key-value').textContent = activeKey
+  startPolling()
+}
+
+$('#btn-accept-key').addEventListener('click', async () => {
+  finishConnect(pendingRoomKey)
+})
+
+$('#btn-use-custom-key').addEventListener('click', async () => {
+  const custom = $('#key-prompt-input').value.trim()
+  if (!custom) return
+  await invoke('set_encryption_key', { key: custom })
+  finishConnect(custom)
+})
+
+$('#btn-copy-key').addEventListener('click', () => {
+  const key = $('#stego-key-value').textContent
+  navigator.clipboard.writeText(key).catch(() => {})
+  $('#btn-copy-key').textContent = 'copied'
+  setTimeout(() => { $('#btn-copy-key').textContent = 'copy' }, 1500)
 })
 
 $('#btn-send').addEventListener('click', sendMessage)

@@ -24,6 +24,11 @@
       </div>
       <div id="server-info" class="hidden">
         <span id="server-addr-label"></span>
+        <div id="stego-key-display">
+          <span id="stego-key-label">encryption key</span>
+          <code id="stego-key-value"></code>
+          <button id="btn-copy-key" title="copy to clipboard">copy</button>
+        </div>
       </div>
     </aside>
     <main id="chat">
@@ -41,6 +46,18 @@
         <button id="btn-send">send</button>
       </div>
     </main>
+  </div>
+  <div id="key-prompt-overlay" class="hidden">
+    <div id="key-prompt">
+      <span id="key-prompt-title">server room key</span>
+      <code id="key-prompt-value"></code>
+      <span id="key-prompt-hint">accept to use this key, or enter your own</span>
+      <input id="key-prompt-input" type="text" placeholder="paste your own key" />
+      <div id="key-prompt-actions">
+        <button id="btn-accept-key">accept server key</button>
+        <button id="btn-use-custom-key">use my key</button>
+      </div>
+    </div>
   </div>
   <script src="app.js"></script>
 </body>

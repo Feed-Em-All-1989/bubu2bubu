@@ -20,7 +20,7 @@ impl ServerConnection {
         addr: &str,
         local_key: &[u8; 32],
         username: &str,
-    ) -> Result<Self, String> {
+    ) -> Result<(Self, String), String> {
         let mut stream = TcpStream::connect(addr).await.map_err(|e| e.to_string())?;
 
         let (_, mut initiator) = build_initiator(local_key)?;
@@ -35,13 +35,20 @@ impl ServerConnection {
         send_frame(&mut stream, &msg3).await?;
 
         let noise = initiator.into_transport()?;
-        let (read_half, write_half) = stream.into_split();
+        let (mut read_half, write_half) = stream.into_split();
         let transport = Arc::new(Mutex::new(Transport::Initiator(noise)));
 
         let join = ClientMsg::Join { name: username.to_string() };
         let join_data = serde_json::to_vec(&join).map_err(|e| e.to_string())?;
         let mut writer = write_half;
         send_noise_msg(&mut writer, &transport, &join_data).await?;
+
+        let welcome_data = recv_noise_msg(&mut read_half, &transport).await?;
+        let welcome: ServerMsg = serde_json::from_slice(&welcome_data).map_err(|e| e.to_string())?;
+        let room_key = match welcome {
+            ServerMsg::Welcome { room_key } => room_key,
+            _ => return Err("expected welcome message".into()),
+        };
 
         let (tx, rx) = mpsc::channel::<Result<ServerMsg, String>>(256);
         let recv_transport = transport.clone();
@@ -64,11 +71,12 @@ impl ServerConnection {
             }
         });
 
-        Ok(Self {
+        let conn = Self {
             transport,
             writer,
             incoming_rx: rx,
-        })
+        };
+        Ok((conn, room_key))
     }
 
     pub async fn send_chat(
@@ -76,9 +84,10 @@ impl ServerConnection {
         plaintext: &[u8],
         id: &str,
         reply_to: Option<String>,
+        stego_password: &str,
     ) -> Result<String, String> {
         let config = StegoConfig::default();
-        let (png_bytes, metadata) = encoder::encode(plaintext, "bubu2bubu-stego", &config).await?;
+        let (png_bytes, metadata) = encoder::encode(plaintext, stego_password, &config).await?;
         let image = base64::Engine::encode(
             &base64::engine::general_purpose::STANDARD,
             &png_bytes,
@@ -101,10 +110,10 @@ impl ServerConnection {
     }
 }
 
-pub fn decode_stego(image_b64: &str, metadata: &StegoMetadata) -> Result<Vec<u8>, String> {
+pub fn decode_stego(image_b64: &str, metadata: &StegoMetadata, stego_password: &str) -> Result<Vec<u8>, String> {
     let png_bytes = base64::Engine::decode(
         &base64::engine::general_purpose::STANDARD,
         image_b64,
     ).map_err(|e| e.to_string())?;
-    decoder::decode(&png_bytes, "bubu2bubu-stego", metadata)
+    decoder::decode(&png_bytes, stego_password, metadata)
 }

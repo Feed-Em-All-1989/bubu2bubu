@@ -23,9 +23,22 @@ async fn set_username(state: State<'_, AppState>, name: String) -> Result<(), St
 }
 
 #[tauri::command]
-async fn connect_to_server(state: State<'_, AppState>, addr: String) -> Result<(), String> {
+async fn connect_to_server(
+    state: State<'_, AppState>,
+    addr: String,
+) -> Result<String, String> {
     let mut session = state.session.lock().await;
     session.connect(&addr).await
+}
+
+#[tauri::command]
+async fn set_encryption_key(
+    state: State<'_, AppState>,
+    key: String,
+) -> Result<(), String> {
+    let mut session = state.session.lock().await;
+    session.set_encryption_key(key);
+    Ok(())
 }
 
 #[tauri::command]
@@ -65,6 +78,7 @@ fn main() {
             get_public_key,
             set_username,
             connect_to_server,
+            set_encryption_key,
             send_message,
             recv_message,
             get_history,

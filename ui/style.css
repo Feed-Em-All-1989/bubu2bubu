@@ -137,12 +137,59 @@ html, body {
   cursor: default;
 }
 
+#key-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: -6px;
+}
+
 #server-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
   font-size: 12px;
   color: var(--text-muted);
+}
+
+#stego-key-display {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+#stego-key-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+}
+
+#stego-key-value {
+  font-size: 10px;
+  color: var(--accent);
+  word-break: break-all;
+  line-height: 1.5;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  user-select: all;
+}
+
+#btn-copy-key {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font);
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+#btn-copy-key:hover {
+  border-color: var(--accent-dim);
+  color: var(--accent-dim);
 }
 
 .hidden {
@@ -379,4 +426,117 @@ html, body {
 #msg-input::placeholder,
 #connect-panel input::placeholder {
   color: var(--text-muted);
+}
+
+#key-prompt-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+}
+
+#key-prompt {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 440px;
+  width: 90%;
+  animation: fadeIn 0.15s ease;
+}
+
+#key-prompt-title {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+#key-prompt-value {
+  font-size: 11px;
+  color: var(--accent);
+  word-break: break-all;
+  line-height: 1.6;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  user-select: all;
+  background: var(--bg);
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+#key-prompt-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+#key-prompt-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#key-prompt-input:focus {
+  border-color: var(--accent-dim);
+}
+
+#key-prompt-input::placeholder {
+  color: var(--text-muted);
+}
+
+#key-prompt-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+#btn-accept-key {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent-dim);
+  color: #fff;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#btn-accept-key:hover {
+  background: var(--accent);
+}
+
+#btn-use-custom-key {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+#btn-use-custom-key:hover {
+  border-color: var(--accent-dim);
+  color: var(--accent-dim);
 }
