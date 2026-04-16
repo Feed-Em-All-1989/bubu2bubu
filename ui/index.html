@@ -18,20 +18,24 @@
         <code id="pubkey"></code>
       </div>
       <div id="connect-panel">
-        <input id="addr-input" type="text" placeholder="ip:port" />
-        <div id="connect-actions">
-          <button id="btn-host">host</button>
-          <button id="btn-join">join</button>
-        </div>
-        <input id="port-input" type="number" placeholder="port" value="9999" />
+        <input id="name-input" type="text" placeholder="username" />
+        <input id="addr-input" type="text" placeholder="server ip:port" />
+        <button id="btn-connect">connect</button>
       </div>
-      <div id="peer-info" class="hidden">
-        <span>connected to</span>
-        <code id="peer-key"></code>
+      <div id="server-info" class="hidden">
+        <span id="server-addr-label"></span>
       </div>
     </aside>
     <main id="chat">
+      <div id="chat-header">
+        <span id="chat-title">chat</span>
+        <button id="btn-labubu" title="toggle stego images">labubu</button>
+      </div>
       <div id="messages"></div>
+      <div id="reply-bar" class="hidden">
+        <span id="reply-preview"></span>
+        <button id="btn-cancel-reply">x</button>
+      </div>
       <div id="input-bar">
         <input id="msg-input" type="text" placeholder="message" />
         <button id="btn-send">send</button>
