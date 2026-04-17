@@ -13,9 +13,15 @@
         <h1>bubu2bubu</h1>
         <span id="status-dot" class="offline"></span>
       </div>
-      <div id="identity">
-        <span id="pubkey-label">your key</span>
-        <code id="pubkey"></code>
+      <div id="profile-section">
+        <div id="avatar-wrapper">
+          <img id="own-avatar" src="default-avatar.png" alt="" />
+          <button id="btn-change-avatar" title="change avatar">edit</button>
+          <input id="avatar-input" type="file" accept="image/png,image/jpeg" />
+        </div>
+        <div id="profile-info">
+          <span id="key-tag"></span>
+        </div>
       </div>
       <div id="connect-panel">
         <input id="name-input" type="text" placeholder="username" />
@@ -23,11 +29,18 @@
         <button id="btn-connect">connect</button>
       </div>
       <div id="server-info" class="hidden">
-        <span id="server-addr-label"></span>
+        <div id="rename-row">
+          <span id="server-addr-label"></span>
+          <button id="btn-rename" title="change username">rename</button>
+        </div>
         <div id="stego-key-display">
           <span id="stego-key-label">encryption key</span>
           <code id="stego-key-value"></code>
           <button id="btn-copy-key" title="copy to clipboard">copy</button>
+        </div>
+        <div id="user-list-section">
+          <span id="user-list-label">online</span>
+          <div id="user-list"></div>
         </div>
       </div>
     </aside>
@@ -35,6 +48,10 @@
       <div id="chat-header">
         <span id="chat-title">chat</span>
         <button id="btn-labubu" title="toggle stego images">labubu</button>
+      </div>
+      <div id="disconnect-banner" class="hidden">
+        <span id="disconnect-text">disconnected from server</span>
+        <button id="btn-reconnect">reconnect</button>
       </div>
       <div id="messages"></div>
       <div id="reply-bar" class="hidden">
@@ -57,6 +74,14 @@
         <button id="btn-accept-key">accept server key</button>
         <button id="btn-use-custom-key">use my key</button>
       </div>
+    </div>
+  </div>
+  <div id="profile-popup" class="hidden">
+    <div id="profile-popup-inner">
+      <img id="popup-avatar" src="default-avatar.png" alt="" />
+      <span id="popup-name"></span>
+      <code id="popup-tag"></code>
+      <button id="btn-close-popup">close</button>
     </div>
   </div>
   <script src="app.js"></script>

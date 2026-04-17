@@ -58,7 +58,10 @@ impl ServerConnection {
             loop {
                 let raw = match recv_noise_msg(&mut reader, &recv_transport).await {
                     Ok(data) => data,
-                    Err(_) => break,
+                    Err(_) => {
+                        let _ = tx.send(Err("disconnected".into())).await;
+                        break;
+                    }
                 };
                 match serde_json::from_slice::<ServerMsg>(&raw) {
                     Ok(msg) => {
@@ -103,6 +106,11 @@ impl ServerConnection {
         send_noise_msg(&mut self.writer, &self.transport, &data).await?;
 
         Ok(image)
+    }
+
+    pub async fn send_msg(&mut self, msg: &ClientMsg) -> Result<(), String> {
+        let data = serde_json::to_vec(msg).map_err(|e| e.to_string())?;
+        send_noise_msg(&mut self.writer, &self.transport, &data).await
     }
 
     pub fn try_recv(&mut self) -> Option<Result<ServerMsg, String>> {
